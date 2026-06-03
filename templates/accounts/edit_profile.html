@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Modifier mon profil — FloralShop{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="form-page-card">
+        <div class="form-page-header">
+            <div>
+                <h1>Modifier mon profil</h1>
+                <p>Mettre à jour vos informations personnelles et votre boutique.</p>
+            </div>
+            <a href="{% url 'profile' %}" class="btn-outline">Retour au profil</a>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label for="first_name">Prénom</label>
+                    <input id="first_name" type="text" name="first_name" value="{{ user.first_name }}" placeholder="Prénom">
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Nom</label>
+                    <input id="last_name" type="text" name="last_name" value="{{ user.last_name }}" placeholder="Nom">
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input id="email" type="email" value="{{ user.email }}" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Téléphone</label>
+                    <input id="phone" type="text" name="phone" value="{{ user.phone }}" placeholder="Téléphone">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="city">Ville</label>
+                <input id="city" type="text" name="city" value="{{ user.city }}" placeholder="Ville">
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label for="photo">Photo de profil</label>
+                    <input id="photo" type="file" name="photo" accept="image/*">
+                </div>
+                {% if user.is_seller %}
+                <div class="form-group">
+                    {% if profile and profile.banner %}
+                        <label>Bannière actuelle</label>
+                        <div style="margin-bottom:.75rem;">
+                            <img src="{{ profile.banner.url }}" alt="Bannière" style="max-width:100%;border-radius:12px;">
+                        </div>
+                    {% endif %}
+                    <label for="banner">Bannière de boutique</label>
+                    <input id="banner" type="file" name="banner" accept="image/*">
+                </div>
+                {% endif %}
+            </div>
+
+            {% if user.is_seller and profile %}
+            <div class="form-page-card" style="padding:1.5rem; margin-top:1.5rem; background: #faf9ff;">
+                <h3 style="margin-bottom:1rem;">Informations boutique</h3>
+                <div class="form-group">
+                    <label for="shop_name">Nom de la boutique</label>
+                    <input id="shop_name" type="text" name="shop_name" value="{{ profile.shop_name }}" placeholder="Nom de boutique">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4" placeholder="Description de votre boutique">{{ profile.description }}</textarea>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="address">Adresse</label>
+                        <input id="address" type="text" name="address" value="{{ profile.address }}" placeholder="Adresse">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile_city">Ville de la boutique</label>
+                        <input id="profile_city" type="text" name="city" value="{{ profile.city }}" placeholder="Ville de la boutique">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn-primary btn-full" style="margin-top:1rem;">Enregistrer les modifications</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

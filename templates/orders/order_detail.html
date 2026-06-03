@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Commande #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="order-detail-header">
+        <div>
+            <h1>Commande <span class="text-pink">#{{ order.id }}</span></h1>
+            <p class="text-gray">Passée le {{ order.created_at|date:"d/m/Y à H:i" }}</p>
+        </div>
+        <span class="badge badge-{{ order.status }} badge-large">
+            {{ order.get_status_display }}
+        </span>
+    </div>
+
+    <!-- BARRE DE PROGRESSION -->
+    <div class="order-progress">
+        {% with s=order.status %}
+        <div class="progress-step {% if s != 'canceled' %}active{% endif %}">
+            <div class="step-dot">📝</div>
+            <span>Commandé</span>
+        </div>
+        <div class="progress-line {% if s in 'accepted,preparing,shipped,delivered' %}filled{% endif %}"></div>
+        <div class="progress-step {% if s in 'accepted,preparing,shipped,delivered' %}active{% endif %}">
+            <div class="step-dot">✅</div>
+            <span>Accepté</span>
+        </div>
+        <div class="progress-line {% if s in 'preparing,shipped,delivered' %}filled{% endif %}"></div>
+        <div class="progress-step {% if s in 'preparing,shipped,delivered' %}active{% endif %}">
+            <div class="step-dot">🌸</div>
+            <span>Préparation</span>
+        </div>
+        <div class="progress-line {% if s in 'shipped,delivered' %}filled{% endif %}"></div>
+        <div class="progress-step {% if s in 'shipped,delivered' %}active{% endif %}">
+            <div class="step-dot">🚚</div>
+            <span>En livraison</span>
+        </div>
+        <div class="progress-line {% if s == 'delivered' %}filled{% endif %}"></div>
+        <div class="progress-step {% if s == 'delivered' %}active{% endif %}">
+            <div class="step-dot">🎉</div>
+            <span>Livrée</span>
+        </div>
+        {% endwith %}
+    </div>
+
+    <div class="order-detail-grid">
+
+        <!-- ARTICLES -->
+        <div class="order-card-section">
+            <h3>🌸 Articles commandés</h3>
+            {% for item in items %}
+            <div class="order-item-row">
+                {% with item.bouquet.images.first as img %}
+                    {% if img %}
+                        <img src="{{ img.image.url }}" alt="{{ item.bouquet.name }}">
+                    {% else %}
+                        <div class="item-no-img">🌸</div>
+                    {% endif %}
+                {% endwith %}
+                <div class="item-info">
+                    <strong>{{ item.bouquet.name }}</strong>
+                    <span class="text-gray">{{ item.bouquet.seller.shop_name }}</span>
+                </div>
+                <div class="item-qty">x{{ item.quantity }}</div>
+                <div class="item-price">{{ item.get_subtotal }} MAD</div>
+            </div>
+            {% endfor %}
+
+            <div class="order-total-row">
+                <span>Total</span>
+                <strong class="text-pink">{{ order.total_price }} MAD</strong>
+            </div>
+        </div>
+
+        <!-- INFOS LIVRAISON -->
+        <div class="order-card-section">
+            <h3>🚚 Livraison</h3>
+            <div class="info-row">
+                <span class="info-label">Adresse</span>
+                <span>{{ order.delivery_address }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Ville</span>
+                <span>{{ order.delivery_city }}</span>
+            </div>
+            {% if delivery %}
+            <div class="info-row">
+                <span class="info-label">Livreur</span>
+                <span>{{ delivery.delivery_person.user.username|default:"En attente d'assignation" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Statut livraison</span>
+                <span class="badge badge-{{ delivery.status }}">{{ delivery.get_status_display }}</span>
+            </div>
+            {% endif %}
+            {% if order.note %}
+            <div class="info-row">
+                <span class="info-label">Note</span>
+                <span>{{ order.note }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- PAIEMENT -->
+        <div class="order-card-section">
+            <h3>💳 Paiement</h3>
+            <div class="info-row">
+                <span class="info-label">Méthode</span>
+                <span>{{ order.get_payment_method_display }}</span>
+            </div>
+            {% if payment %}
+            <div class="info-row">
+                <span class="info-label">Statut</span>
+                <span class="badge badge-{{ payment.status }}">{{ payment.get_status_display }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Montant</span>
+                <strong>{{ payment.amount }} MAD</strong>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <div class="order-back">
+        <a href="{% url 'order_list' %}" class="btn-outline">← Retour à mes commandes</a>
+    </div>
+</div>
+{% endblock %}

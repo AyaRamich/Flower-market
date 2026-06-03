@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Vendeur — FloralShop{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>👋 Bonjour, {{ user.username }}</h1>
+        <p class="text-gray">{{ profile.shop_name }}</p>
+    </div>
+    <a href="{% url 'bouquet_create' %}" class="btn-primary">+ Nouveau bouquet</a>
+</div>
+
+<!-- STATS -->
+<div class="dashboard-grid">
+    <div class="stat-card">
+        <span class="stat-icon">💐</span>
+        <div>
+            <div class="stat-value">{{ total_bouquets }}</div>
+            <div class="stat-label">Bouquets total</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">✅</span>
+        <div>
+            <div class="stat-value">{{ active_bouquets }}</div>
+            <div class="stat-label">Disponibles</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">📦</span>
+        <div>
+            <div class="stat-value">{{ total_orders }}</div>
+            <div class="stat-label">Commandes total</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">💰</span>
+        <div>
+            <div class="stat-value">{{ total_revenue }} MAD</div>
+            <div class="stat-label">Revenus</div>
+        </div>
+    </div>
+</div>
+
+<!-- COMMANDES EN ATTENTE -->
+{% if pending_orders %}
+<div class="dashboard-section">
+    <h2>⏳ Commandes en attente</h2>
+    <div class="orders-list">
+        {% for order in pending_orders %}
+        <div class="order-card urgent">
+            <div class="order-info">
+                <span class="order-id">#{{ order.id }}</span>
+                <span class="order-client">👤 {{ order.client.username }}</span>
+                <span class="order-price">{{ order.total_price }} MAD</span>
+                <span class="order-date">{{ order.created_at|date:"d/m/Y H:i" }}</span>
+            </div>
+            <div class="order-actions">
+              <a href="{% url 'seller_order_detail' order.pk %}" class="btn-primary">
+        👁 Voir la commande
+              </a> 
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- COMMANDES RÉCENTES -->
+<div class="dashboard-section">
+    <h2>📋 Commandes récentes</h2>
+    {% if recent_orders %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Client</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in recent_orders %}
+            <tr>
+                <td>#{{ order.id }}</td>
+                <td>{{ order.client.username }}</td>
+                <td>{{ order.total_price }} MAD</td>
+                <td><span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                <td>{{ order.created_at|date:"d/m/Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <span>📭</span>
+        <p>Aucune commande pour l'instant.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- MES BOUQUETS -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>💐 Mes bouquets ({{ total_bouquets }})</h2>
+        <a href="{% url 'bouquet_create' %}" class="btn-outline">+ Ajouter</a>
+    </div>
+    
+    {% if bouquets %}
+    <div class="bouquets-grid">
+        {% for bouquet in bouquets %}
+        <div class="bouquet-card">
+            <div class="bouquet-image">
+                {% if bouquet.images.first %}
+                    <img src="{{ bouquet.images.first.image.url }}" alt="{{ bouquet.name }}">
+                {% else %}
+                    <div class="no-image">📷</div>
+                {% endif %}
+                <span class="badge badge-{{ bouquet.status }}">{{ bouquet.get_status_display }}</span>
+            </div>
+            <div class="bouquet-info">
+                <h3>{{ bouquet.name }}</h3>
+                <p class="bouquet-price">{{ bouquet.price }} MAD</p>
+                <p class="bouquet-stock">Stock: {{ bouquet.stock }} unité(s)</p>
+                <div class="bouquet-actions">
+                    <a href="{% url 'bouquet_detail' bouquet.pk %}" class="btn-small">Voir</a>
+                    <a href="{% url 'bouquet_edit' bouquet.pk %}" class="btn-small">Éditer</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span>📭</span>
+        <p>Aucun bouquet pour l'instant.</p>
+        <a href="{% url 'bouquet_create' %}" class="btn-primary">Créer votre premier bouquet</a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

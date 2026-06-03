@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Mon espace — FloralShop{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>👋 Bonjour, {{ user.username }}</h1>
+        <p class="text-gray">Mon espace client</p>
+    </div>
+    <a href="{% url 'home' %}" class="btn-primary">🌸 Parcourir les bouquets</a>
+</div>
+
+<!-- STATS -->
+<div class="dashboard-grid">
+    <div class="stat-card">
+        <span class="stat-icon">🛍</span>
+        <div>
+            <div class="stat-value">{{ total_orders }}</div>
+            <div class="stat-label">Commandes total</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">🚚</span>
+        <div>
+            <div class="stat-value">{{ active_orders.count }}</div>
+            <div class="stat-label">En cours</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">✅</span>
+        <div>
+            <div class="stat-value">{{ delivered_orders }}</div>
+            <div class="stat-label">Livrées</div>
+        </div>
+    </div>
+</div>
+
+<!-- COMMANDES EN COURS -->
+{% if active_orders %}
+<div class="dashboard-section">
+    <h2>🚚 Commandes en cours</h2>
+    <div class="orders-list">
+        {% for order in active_orders %}
+        <div class="order-card">
+            <div class="order-info">
+                <span class="order-id">#{{ order.id }}</span>
+                <span class="order-seller">🏪 {{ order.seller.shop_name }}</span>
+                <span class="order-price">{{ order.total_price }} MAD</span>
+            </div>
+            <div class="order-status">
+                <span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span>
+                <!-- Barre de progression -->
+                <div class="progress-bar">
+                    <div class="progress-fill status-{{ order.status }}"></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- HISTORIQUE -->
+<div class="dashboard-section">
+    <h2>📋 Historique des commandes</h2>
+    {% if orders %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Vendeur</th>
+                <th>Montant</th>
+                <th>Paiement</th>
+                <th>Statut</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>#{{ order.id }}</td>
+                <td>{{ order.seller.shop_name|default:"—" }}</td>
+                <td>{{ order.total_price }} MAD</td>
+                <td>{{ order.get_payment_method_display }}</td>
+                <td><span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                <td>{{ order.created_at|date:"d/m/Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <span>🛒</span>
+        <p>Vous n'avez pas encore commandé.</p>
+        <a href="{% url 'home' %}" class="btn-primary">Découvrir les bouquets</a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

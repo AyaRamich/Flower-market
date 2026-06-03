@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Commande #{{ order.id }} — Vendeur{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <div class="order-detail-header">
+        <div>
+            <h1>Commande <span class="text-pink">#{{ order.id }}</span></h1>
+            <p class="text-gray">Reçue le {{ order.created_at|date:"d/m/Y à H:i" }}</p>
+        </div>
+        <span class="badge badge-{{ order.status }} badge-large">
+            {{ order.get_status_display }}
+        </span>
+    </div>
+
+    <div class="order-detail-grid">
+
+        <!-- ARTICLES -->
+        <div class="order-card-section">
+            <h3>🌸 Articles commandés</h3>
+            {% for item in items %}
+            <div class="order-item-row">
+                {% with item.bouquet.images.first as img %}
+                    {% if img %}
+                        <img src="{{ img.image.url }}" alt="{{ item.bouquet.name }}">
+                    {% else %}
+                        <div class="item-no-img">🌸</div>
+                    {% endif %}
+                {% endwith %}
+                <div class="item-info">
+                    <strong>{{ item.bouquet.name }}</strong>
+                    <span class="text-gray">{{ item.price }} MAD / unité</span>
+                </div>
+                <div class="item-qty">x{{ item.quantity }}</div>
+                <div class="item-price">{{ item.get_subtotal }} MAD</div>
+            </div>
+            {% endfor %}
+
+            <div class="order-total-row">
+                <span>Total</span>
+                <strong class="text-pink">{{ order.total_price }} MAD</strong>
+            </div>
+        </div>
+
+        <!-- INFOS CLIENT -->
+        <div class="order-card-section">
+            <h3>👤 Client</h3>
+            <div class="info-row">
+                <span class="info-label">Nom</span>
+                <span>{{ order.client.get_full_name|default:order.client.username }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Téléphone</span>
+                <span>{{ order.client.phone|default:"Non renseigné" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Adresse livraison</span>
+                <span>{{ order.delivery_address }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Ville</span>
+                <span>{{ order.delivery_city }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Paiement</span>
+                <span>{{ order.get_payment_method_display }}</span>
+            </div>
+            {% if order.note %}
+            <div class="info-row">
+                <span class="info-label">Note client</span>
+                <span class="note-text">💬 {{ order.note }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- ACTIONS : uniquement si commande en attente -->
+    {% if order.status == 'pending' %}
+    <div class="order-actions-card">
+        <h3>⚡ Action requise</h3>
+        <p class="text-gray">Voulez-vous accepter ou refuser cette commande ?</p>
+        <div class="actions-row">
+
+            <form method="POST" action="{% url 'order_accept' order.pk %}">
+                {% csrf_token %}
+                <button class="btn-accept btn-large">
+                    ✅ Accepter la commande
+                </button>
+            </form>
+
+            <form method="POST" action="{% url 'order_cancel' order.pk %}"
+                  onsubmit="return confirm('Refuser cette commande ?')">
+                {% csrf_token %}
+                <button class="btn-cancel btn-large">
+                    ❌ Refuser la commande
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    {% elif order.status == 'accepted' %}
+    <div class="order-actions-card status-info">
+        <span>✅ Commande acceptée — en attente d'un livreur</span>
+    </div>
+
+    {% elif order.status == 'canceled' %}
+    <div class="order-actions-card status-canceled">
+        <span>❌ Commande annulée</span>
+    </div>
+
+    {% else %}
+    <div class="order-actions-card status-info">
+        <span>🚚 {{ order.get_status_display }}</span>
+    </div>
+    {% endif %}
+
+    <div class="order-back" style="margin-top:1rem;">
+        <a href="{% url 'seller_dashboard' %}" class="btn-outline">← Retour au dashboard</a>
+    </div>
+
+</div>
+{% endblock %}

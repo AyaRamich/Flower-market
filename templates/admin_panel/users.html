@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Utilisateurs{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="dashboard-header">
+        <h1>👥 Gestion des utilisateurs</h1>
+        <span class="text-gray">{{ users.count }} utilisateurs</span>
+        <a href="{% url 'admin_dashboard' %}" class="btn-primary">← Retour au dashboard</a>
+    </div>
+
+    <div class="admin-table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Email</th>
+                    <th>Rôle</th>
+                    <th>Statut</th>
+                    <th>Inscription</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td><strong>{{ u.username }}</strong></td>
+                    <td>{{ u.email }}</td>
+                    <td><span class="badge role-{{ u.role }}">{{ u.get_role_display }}</span></td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="badge badge-available">Actif</span>
+                        {% else %}
+                            <span class="badge badge-canceled">Inactif</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-gray">{{ u.date_joined|date:"d/m/Y" }}</td>
+                    <td>
+                        <div style="display:flex; gap:.5rem;">
+                            {% if u != request.user %}
+                            <form method="POST" action="{% url 'admin_user_toggle' u.pk %}">
+                                {% csrf_token %}
+                                <button class="{% if u.is_active %}btn-cancel{% else %}btn-accept{% endif %}"
+                                        style="font-size:.8rem; padding:.3rem .7rem;">
+                                    {% if u.is_active %}🚫 Désactiver{% else %}✅ Activer{% endif %}
+                                </button>
+                            </form>
+                            <form method="POST" action="{% url 'admin_user_delete' u.pk %}"
+                                  onsubmit="return confirm('Supprimer {{ u.username }} ?')">
+                                {% csrf_token %}
+                                <button class="btn-cancel" style="font-size:.8rem; padding:.3rem .7rem;">
+                                    🗑
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-gray" style="font-size:.85rem;">Vous</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

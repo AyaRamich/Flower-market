@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <span>⚙️</span>
+            <span>Admin Panel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="?section=overview"
+               class="sidebar-link {% if section == 'overview' or not section %}active{% endif %}">
+                📊 Vue globale
+            </a>
+            <a href="?section=users"
+               class="sidebar-link {% if section == 'users' %}active{% endif %}">
+                👥 Utilisateurs
+            </a>
+            <a href="?section=sellers"
+               class="sidebar-link {% if section == 'sellers' %}active{% endif %}">
+                🏪 Vendeurs
+            </a>
+            <a href="?section=stock"
+               class="sidebar-link {% if section == 'stock' %}active{% endif %}">
+                🌿 Stock
+            </a>
+            <a href="?section=categories"
+               class="sidebar-link {% if section == 'categories' %}active{% endif %}">
+                🏷 Catégories
+            </a>
+            <a href="?section=orders"
+               class="sidebar-link {% if section == 'orders' %}active{% endif %}">
+                📦 Commandes
+            </a>
+        </nav>
+    </aside>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="admin-main">
+
+        <!-- VUE GLOBALE -->
+        {% if section == 'overview' or not section %}
+        <div class="admin-section">
+            <h2>📊 Vue globale</h2>
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <span class="stat-icon">👥</span>
+                    <div>
+                        <div class="stat-value">{{ total_users }}</div>
+                        <div class="stat-label">Utilisateurs</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">🏪</span>
+                    <div>
+                        <div class="stat-value">{{ total_sellers }}</div>
+                        <div class="stat-label">Vendeurs</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">📦</span>
+                    <div>
+                        <div class="stat-value">{{ total_orders }}</div>
+                        <div class="stat-label">Commandes</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">💰</span>
+                    <div>
+                        <div class="stat-value">{{ total_revenue }} MAD</div>
+                        <div class="stat-label">Revenus</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">⏳</span>
+                    <div>
+                        <div class="stat-value">{{ pending_orders }}</div>
+                        <div class="stat-label">En attente</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">🚫</span>
+                    <div>
+                        <div class="stat-value">{{ soldout_bouquets }}</div>
+                        <div class="stat-label">Sold Out</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if low_stock %}
+            <div class="admin-card" style="margin-top:1.5rem;">
+                <h3>⚠️ Stock faible</h3>
+                <div class="alert-list" style="margin-top:1rem;">
+                    {% for flower in low_stock %}
+                    <div class="alert-card">
+                        <span class="alert-icon">🌿</span>
+                        <div>
+                            <strong>{{ flower.flower_name }}</strong>
+                            <span class="text-gray"> — {{ flower.quantity }} {{ flower.unit }} restants</span>
+                        </div>
+                        <span class="badge badge-warning">Stock faible</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- UTILISATEURS -->
+        {% elif section == 'users' %}
+        <div class="admin-section">
+            <h2>👥 Utilisateurs ({{ users.count }})</h2>
+            <div class="admin-table-card" style="margin-top:1rem;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Utilisateur</th>
+                            <th>Email</th>
+                            <th>Rôle</th>
+                            <th>Statut</th>
+                            <th>Inscription</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td>{{ u.email }}</td>
+                            <td><span class="nav-role role-{{ u.role }}">{{ u.get_role_display }}</span></td>
+                            <td>
+                                {% if u.is_active %}
+                                    <span class="badge badge-available">Actif</span>
+                                {% else %}
+                                    <span class="badge badge-canceled">Inactif</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-gray">{{ u.date_joined|date:"d/m/Y" }}</td>
+                            <td>
+                                <div style="display:flex; gap:.5rem;">
+                                    {% if u != request.user %}
+                                    <form method="POST" action="{% url 'admin_user_toggle' u.pk %}">
+                                        {% csrf_token %}
+                                        <button class="{% if u.is_active %}btn-cancel{% else %}btn-accept{% endif %}"
+                                                style="font-size:.8rem; padding:.3rem .7rem;">
+                                            {% if u.is_active %}🚫{% else %}✅{% endif %}
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{% url 'admin_user_delete' u.pk %}"
+                                          onsubmit="return confirm('Supprimer ?')">
+                                        {% csrf_token %}
+                                        <button class="btn-cancel" style="font-size:.8rem; padding:.3rem .7rem;">🗑</button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-gray" style="font-size:.85rem;">Vous</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VENDEURS -->
+        {% elif section == 'sellers' %}
+        <div class="admin-section">
+            <h2>🏪 Vendeurs</h2>
+            <div class="admin-table-card" style="margin-top:1rem;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Boutique</th>
+                            <th>Propriétaire</th>
+                            <th>Ville</th>
+                            <th>Bouquets</th>
+                            <th>Vérifié</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for seller in sellers %}
+                        <tr>
+                            <td><strong>{{ seller.shop_name }}</strong></td>
+                            <td>{{ seller.user.username }}</td>
+                            <td>{{ seller.city|default:"—" }}</td>
+                            <td>{{ seller.bouquets.count }}</td>
+                            <td>
+                                {% if seller.is_verified %}
+                                    <span class="badge badge-available">✓ Vérifié</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Non vérifié</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{% url 'admin_seller_verify' seller.pk %}">
+                                    {% csrf_token %}
+                                    <button class="btn-outline" style="font-size:.8rem; padding:.3rem .7rem;">
+                                        {% if seller.is_verified %}❌ Retirer{% else %}✅ Vérifier{% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- STOCK -->
+        {% elif section == 'stock' %}
+        <div class="admin-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h2>🌿 Stock floral</h2>
+                <a href="{% url 'admin_stock_create' %}" class="btn-primary">+ Ajouter</a>
+            </div>
+            <div class="admin-table-card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Fleur</th>
+                            <th>Quantité</th>
+                            <th>Unité</th>
+                            <th>Seuil</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for flower in flowers %}
+                        <tr>
+                            <td><strong>{{ flower.flower_name }}</strong></td>
+                            <td class="{% if flower.is_low_stock %}text-danger{% endif %}">
+                                {{ flower.quantity }}
+                            </td>
+                            <td>{{ flower.get_unit_display }}</td>
+                            <td>{{ flower.min_threshold }}</td>
+                            <td>
+                                {% if flower.quantity == 0 %}
+                                    <span class="badge badge-canceled">Épuisé</span>
+                                {% elif flower.is_low_stock %}
+                                    <span class="badge badge-warning">Faible</span>
+                                {% else %}
+                                    <span class="badge badge-available">OK</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="display:flex; gap:.5rem;">
+                                    <a href="{% url 'admin_stock_edit' flower.pk %}"
+                                       class="btn-outline" style="font-size:.8rem; padding:.3rem .7rem;">✏️</a>
+                                    <form method="POST" action="{% url 'admin_stock_delete' flower.pk %}"
+                                          onsubmit="return confirm('Supprimer ?')">
+                                        {% csrf_token %}
+                                        <button class="btn-cancel" style="font-size:.8rem; padding:.3rem .7rem;">🗑</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CATÉGORIES -->
+        {% elif section == 'categories' %}
+        <div class="admin-section">
+            <h2>🏷 Catégories</h2>
+            <div class="quick-create-card" style="margin-top:1rem;">
+                <form method="POST" action="{% url 'admin_category_create' %}"
+                      style="display:flex; gap:1rem;">
+                    {% csrf_token %}
+                    <input type="text" name="name" placeholder="Nouvelle catégorie..."
+                           required style="flex:1;">
+                    <button type="submit" class="btn-primary">+ Créer</button>
+                </form>
+            </div>
+            <div class="admin-table-card" style="margin-top:1rem;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Slug</th>
+                            <th>Bouquets</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td><strong>{{ cat.name }}</strong></td>
+                            <td class="text-gray">{{ cat.slug }}</td>
+                            <td>{{ cat.bouquets.count }}</td>
+                            <td>
+                                <form method="POST" action="{% url 'admin_category_delete' cat.pk %}"
+                                      onsubmit="return confirm('Supprimer ?')">
+                                    {% csrf_token %}
+                                    <button class="btn-cancel" style="font-size:.8rem; padding:.3rem .7rem;">🗑</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- COMMANDES -->
+        {% elif section == 'orders' %}
+        <div class="admin-section">
+            <h2>📦 Commandes</h2>
+            <div class="dashboard-grid" style="margin:1rem 0;">
+                <div class="stat-card">
+                    <span class="stat-icon">💳</span>
+                    <div>
+                        <div class="stat-value">{{ payment_stats.total }}</div>
+                        <div class="stat-label">Paiements total</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">✅</span>
+                    <div>
+                        <div class="stat-value">{{ payment_stats.success }}</div>
+                        <div class="stat-label">Complétés</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">❌</span>
+                    <div>
+                        <div class="stat-value">{{ payment_stats.failed }}</div>
+                        <div class="stat-label">Échoués</div>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-table-card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Client</th>
+                            <th>Vendeur</th>
+                            <th>Total</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                            <th>Voir</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.client.username }}</td>
+                            <td>{{ order.seller.shop_name|default:"—" }}</td>
+                            <td>{{ order.total_price }} MAD</td>
+                            <td><span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                            <td>{{ order.created_at|date:"d/m/Y" }}</td>
+                            <td>
+                                <a href="{% url 'admin_order_detail' order.pk %}"
+                                   class="btn-outline" style="font-size:.8rem; padding:.3rem .7rem;">
+                                    👁 Voir
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

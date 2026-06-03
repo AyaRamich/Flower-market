@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}{{ bouquet.name }} — FloralShop{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="bouquet-detail-grid">
+
+        <!-- GALERIE IMAGES -->
+        <div class="bouquet-gallery">
+            {% with bouquet.images.all as imgs %}
+            {% if imgs %}
+                <img src="{{ imgs.0.image.url }}"
+                     alt="{{ bouquet.name }}"
+                     class="gallery-main"
+                     id="main-img">
+                {% if imgs|length > 1 %}
+                <div class="gallery-thumbs">
+                    {% for img in imgs %}
+                    <img src="{{ img.image.url }}"
+                         class="gallery-thumb {% if forloop.first %}active{% endif %}"
+                         onclick="switchImg(this)">
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="bouquet-no-image large">🌸</div>
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- INFOS BOUQUET -->
+        <div class="bouquet-detail-info">
+            <div class="bouquet-categories">
+                {% for cat in bouquet.categories.all %}
+                <span class="category-tag">{{ cat.name }}</span>
+                {% endfor %}
+            </div>
+
+            <h1>{{ bouquet.name }}</h1>
+
+            <a href="{% url 'seller_profile' bouquet.seller.pk %}" class="seller-link">
+                🏪 {{ bouquet.seller.shop_name }}
+                {% if bouquet.seller.is_verified %}
+                    <span class="verified-badge">✓ Vérifié</span>
+                {% endif %}
+            </a>
+
+            <p class="bouquet-city">📍 {{ bouquet.city }}</p>
+
+            <div class="bouquet-price-large">{{ bouquet.price }} MAD</div>
+
+            <p class="bouquet-description">{{ bouquet.description }}</p>
+
+            <!-- FLEURS UTILISÉES -->
+            {% if flowers %}
+            <div class="flowers-used">
+                <h4>🌿 Fleurs utilisées</h4>
+                <div class="flowers-tags">
+                    {% for bf in flowers %}
+                    <span class="flower-tag">
+                        {{ bf.flower_stock.flower_name }} × {{ bf.quantity }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- STOCK -->
+            <div class="stock-info">
+                {% if bouquet.status == 'available' %}
+                    <span class="stock-ok">✅ Disponible ({{ bouquet.stock }} en stock)</span>
+                {% else %}
+                    <span class="stock-out">❌ Épuisé</span>
+                {% endif %}
+            </div>
+
+            <!-- BOUTON COMMANDER -->
+            {% if user.is_authenticated and user.is_client %}
+                {% if bouquet.status == 'available' %}
+                <a href="{% url 'order_create' bouquet.pk %}" class="btn-primary btn-large btn-full">
+                    🛍 Commander ce bouquet
+                </a>
+                {% else %}
+                <button class="btn-primary btn-full" disabled style="opacity:.5">
+                    Épuisé
+                </button>
+                {% endif %}
+            {% elif not user.is_authenticated %}
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn-primary btn-full">
+                Connectez-vous pour commander
+            </a>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function switchImg(thumb) {
+    document.getElementById('main-img').src = thumb.src;
+    document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+    thumb.classList.add('active');
+}
+</script>
+{% endblock %}
+{% endblock %}

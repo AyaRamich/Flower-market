@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}{% if flower %}Modifier{% else %}Ajouter{% endif %} une fleur{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="form-page-card">
+        <div class="form-page-header">
+            <h1>{% if flower %}✏️ Modifier{% else %}🌿 Ajouter{% endif %} une fleur</h1>
+            <a href="{% url 'admin_stock' %}" class="btn-outline">← Retour</a>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>Nom de la fleur *</label>
+                    <input type="text" name="flower_name"
+                           value="{{ flower.flower_name|default:'' }}"
+                           placeholder="Ex: Rose Rouge" required>
+                </div>
+                <div class="form-group">
+                    <label>Unité *</label>
+                    <select name="unit">
+                        <option value="stem"  {% if flower.unit == 'stem'  %}selected{% endif %}>Tige</option>
+                        <option value="bunch" {% if flower.unit == 'bunch' %}selected{% endif %}>Bouquet</option>
+                        <option value="pot"   {% if flower.unit == 'pot'   %}selected{% endif %}>Pot</option>
+                        <option value="kg"    {% if flower.unit == 'kg'    %}selected{% endif %}>Kilogramme</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>Quantité *</label>
+                    <input type="number" name="quantity" min="0"
+                           value="{{ flower.quantity|default:'0' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Seuil d'alerte stock faible</label>
+                    <input type="number" name="min_threshold" min="0"
+                           value="{{ flower.min_threshold|default:'10' }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="3"
+                          placeholder="Description optionnelle...">{{ flower.description|default:'' }}</textarea>
+            </div>
+            <div class="form-actions">
+                <a href="{% url 'admin_stock' %}" class="btn-outline">Annuler</a>
+                <button type="submit" class="btn-primary btn-large">
+                    {% if flower %}💾 Enregistrer{% else %}➕ Ajouter au stock{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

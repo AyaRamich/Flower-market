@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil — FloralShop{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="profile-layout">
+
+        <!-- CARTE PROFIL -->
+        <div class="profile-card">
+            <div class="profile-avatar-section">
+                {% if user.photo %}
+                    <img src="{{ user.photo.url }}" class="profile-avatar-large">
+                {% else %}
+                    <div class="profile-avatar-placeholder-large">
+                        {{ user.username|first|upper }}
+                    </div>
+                {% endif %}
+                <div>
+                    <h2>{{ user.get_full_name|default:user.username }}</h2>
+                    <span class="nav-role role-{{ user.role }}">
+                        {{ user.get_role_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="profile-info-list">
+                <div class="info-row">
+                    <span class="info-label">👤 Username</span>
+                    <span>{{ user.username }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">📧 Email</span>
+                    <span>{{ user.email }}</span>
+                </div>
+                {% if user.phone %}
+                <div class="info-row">
+                    <span class="info-label">📞 Téléphone</span>
+                    <span>{{ user.phone }}</span>
+                </div>
+                {% endif %}
+                {% if user.city %}
+                <div class="info-row">
+                    <span class="info-label">📍 Ville</span>
+                    <span>{{ user.city }}</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="info-label">📅 Membre depuis</span>
+                    <span>{{ user.date_joined|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+
+            <!-- Infos spécifiques vendeur -->
+            {% if user.is_seller and profile %}
+            <div class="profile-seller-info">
+                <h3>🏪 Ma boutique</h3>
+                <div class="info-row">
+                    <span class="info-label">Nom</span>
+                    <span>{{ profile.shop_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Ville</span>
+                    <span>{{ profile.city|default:"—" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Note</span>
+                    <span>⭐ {{ profile.rating }}/5</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Statut</span>
+                    {% if profile.is_verified %}
+                        <span class="badge badge-available">✓ Vérifié</span>
+                    {% else %}
+                        <span class="badge badge-warning">En attente</span>
+                    {% endif %}
+                </div>
+               
+            </div>
+            {% endif %}
+
+            <!-- Infos livreur -->
+            {% if user.is_delivery and profile %}
+            <div class="profile-seller-info">
+                <h3>🚚 Mes infos livreur</h3>
+                <div class="info-row">
+                    <span class="info-label">Véhicule</span>
+                    <span>{{ profile.vehicle_type|default:"—" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Livraisons</span>
+                    <span>{{ profile.total_deliveries }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Disponibilité</span>
+                    {% if profile.is_available %}
+                        <span class="badge badge-available">Disponible</span>
+                    {% else %}
+                        <span class="badge badge-canceled">Indisponible</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <a href="{% url 'edit_profile' %}" class="btn-primary btn-full" style="margin-top:1.5rem;">
+                ✏️ Modifier mon profil
+            </a>
+        </div>
+
+        <!-- ACTIVITÉ RÉCENTE -->
+        <div class="profile-activity">
+            {% if user.is_client %}
+            <h3>🛍 Mes dernières commandes</h3>
+            {% with orders=user.orders.all|slice:":5" %}
+            {% if orders %}
+            <div class="orders-list">
+                {% for order in orders %}
+                <a href="{% url 'order_detail' order.pk %}" class="order-card-link">
+                    <div class="order-card">
+                        <div class="order-info">
+                            <span class="order-id">#{{ order.id }}</span>
+                            <span>{{ order.seller.shop_name|default:"—" }}</span>
+                        </div>
+                        <div style="display:flex; gap:.8rem; align-items:center;">
+                            <strong>{{ order.total_price }} MAD</strong>
+                            <span class="badge badge-{{ order.status }}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding:2rem;">
+                <span>🛒</span>
+                <p>Aucune commande.</p>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% elif user.is_seller %}
+            <h3>📊 Mes statistiques</h3>
+            {% with profile=user.seller_profile %}
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="stat-card">
+                    <span class="stat-icon">💐</span>
+                    <div>
+                        <div class="stat-value">{{ profile.bouquets.count }}</div>
+                        <div class="stat-label">Bouquets</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">⭐</span>
+                    <div>
+                        <div class="stat-value">{{ profile.rating }}</div>
+                        <div class="stat-label">Note moyenne</div>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+
+            {% elif user.is_delivery %}
+            <h3>🚚 Mes statistiques</h3>
+            {% with profile=user.delivery_profile %}
+            <div class="stat-card">
+                <span class="stat-icon">✅</span>
+                <div>
+                    <div class="stat-value">{{ profile.total_deliveries }}</div>
+                    <div class="stat-label">Livraisons complétées</div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

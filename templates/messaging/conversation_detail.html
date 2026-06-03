@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Chat avec {{ other_user.username }}{% endblock %}
+
+{% block content %}
+<div class="chat-page">
+
+    <!-- HEADER CHAT -->
+    <div class="chat-header">
+        <a href="{% url 'conversation_list' %}" class="chat-back">←</a>
+        <div class="chat-avatar">
+            {% if other_user.photo %}
+                <img src="{{ other_user.photo.url }}" alt="{{ other_user.username }}">
+            {% else %}
+                <div class="avatar-placeholder">{{ other_user.username|first|upper }}</div>
+            {% endif %}
+        </div>
+        <div class="chat-user-info">
+            <strong>{{ other_user.username }}</strong>
+            <span class="text-gray">{{ other_user.get_role_display }}</span>
+        </div>
+        {% if conversation.order %}
+        <a href="{% url 'order_detail' conversation.order.pk %}"
+           class="chat-order-link">
+            📦 Commande #{{ conversation.order.pk }}
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="chat-messages" id="chat-messages">
+        {% if messages %}
+            {% for msg in messages %}
+            <div class="message-bubble {% if msg.sender == request.user %}me{% else %}other{% endif %}"
+                 id="msg-{{ msg.pk }}">
+                <div class="bubble-content">{{ msg.content }}</div>
+                <div class="bubble-meta">
+                    <span>{{ msg.created_at|date:"H:i" }}</span>
+                    {% if msg.sender == request.user %}
+                        {% if msg.is_read %}
+                            <span class="read-tick">✓✓</span>
+                        {% else %}
+                            <span class="read-tick unread">✓</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="chat-empty">
+                <span>👋</span>
+                <p>Démarrez la conversation !</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- INPUT MESSAGE -->
+    <div class="chat-input-bar">
+        <input type="text"
+               id="message-input"
+               placeholder="Écrivez votre message..."
+               autocomplete="off"
+               onkeydown="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()" class="btn-send">
+            ➤
+        </button>
+    </div>
+
+</div>
+
+{% block extra_js %}
+<script>
+const CONV_ID   = {{ conversation.pk }};
+const SEND_URL  = "{% url 'send_message' conversation.pk %}";
+const CSRF      = "{{ csrf_token }}";
+const ME        = "{{ request.user.username }}";
+
+// Scroller en bas au chargement
+const chatBox = document.getElementById('chat-messages');
+chatBox.scrollTop = chatBox.scrollHeight;
+
+function sendMessage() {
+    const input   = document.getElementById('message-input');
+    const content = input.value.trim();
+    if (!content) return;
+
+    input.value = '';
+
+    fetch(SEND_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken':  CSRF,
+        },
+        body: JSON.stringify({ content }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.id) appendMessage(data);
+    });
+}
+
+function appendMessage(msg) {
+    const div = document.createElement('div');
+    div.className = `message-bubble ${msg.is_me ? 'me' : 'other'}`;
+    div.id = `msg-${msg.id}`;
+    div.innerHTML = `
+        <div class="bubble-content">${msg.content}</div>
+        <div class="bubble-meta">
+            <span>${msg.created_at}</span>
+            ${msg.is_me ? '<span class="read-tick unread">✓</span>' : ''}
+        </div>
+    `;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Polling léger toutes les 3s pour recevoir les nouveaux messages
+let lastMsgId = {{ messages.last.pk|default:0 }};
+
+function pollMessages() {
+    fetch(`/messages/api/poll/${CONV_ID}/?after=${lastMsgId}`)
+        .then(r => r.json())
+        .then(data => {
+            data.messages.forEach(msg => {
+                if (!document.getElementById(`msg-${msg.id}`)) {
+                    appendMessage(msg);
+                    lastMsgId = msg.id;
+                }
+            });
+        })
+        .catch(() => {});
+}
+
+setInterval(pollMessages, 3000);
+</script>
+{% endblock %}
+{% endblock %}
+
+<!-- 
+ -->

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Commander — {{ bouquet.name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="order-create-grid">
+
+        <!-- RÉSUMÉ BOUQUET -->
+        <div class="order-summary-card">
+            <h2>📦 Résumé de la commande</h2>
+
+            {% with bouquet.images.first as img %}
+                {% if img %}
+                    <img src="{{ img.image.url }}" alt="{{ bouquet.name }}" class="order-bouquet-img">
+                {% else %}
+                    <div class="bouquet-no-image">🌸</div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="order-bouquet-info">
+                <h3>{{ bouquet.name }}</h3>
+                <p class="text-gray">{{ bouquet.seller.shop_name }}</p>
+                <p class="text-gray">📍 {{ bouquet.city }}</p>
+                <div class="price-tag">{{ bouquet.price }} MAD / bouquet</div>
+            </div>
+
+            <div class="order-total" id="order-total">
+                Total : <strong id="total-display">{{ bouquet.price }} MAD</strong>
+            </div>
+        </div>
+
+        <!-- FORMULAIRE COMMANDE -->
+        <div class="order-form-card">
+            <h2>🛍 Passer la commande</h2>
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label>Quantité</label>
+                    <div class="quantity-control">
+                        <button type="button" onclick="changeQty(-1)">−</button>
+                        <input type="number" name="quantity" id="qty-input"
+                               value="1" min="1" max="{{ bouquet.stock }}"
+                               onchange="updateTotal()"
+                               readonly>
+                        <button type="button" onclick="changeQty(1)">+</button>
+                    </div>
+                    <small class="text-gray">Stock disponible : {{ bouquet.stock }}</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Adresse de livraison</label>
+                    <input type="text" name="delivery_address"
+                           placeholder="Ex: 12 Rue des Roses, Appt 3"
+                           value="{{ user.client_profile.delivery_address|default:'' }}"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label>Ville</label>
+                    <input type="text" name="delivery_city"
+                           placeholder="Ex: Casablanca"
+                           value="{{ user.city|default:'' }}"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label>Mode de paiement</label>
+                    <div class="payment-options">
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="on_delivery" checked>
+                            <span>💵 Paiement à la livraison</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="transfer">
+                            <span>🏦 Virement bancaire</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Note pour le vendeur <span class="text-gray">(optionnel)</span></label>
+                    <textarea name="note" rows="3"
+                              placeholder="Ex: Ajouter un ruban rose, livraison après 18h..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary btn-full btn-large">
+                    ✅ Confirmer la commande
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+const unitPrice = {{ bouquet.price }};
+const maxStock  = {{ bouquet.stock }};
+
+function changeQty(delta) {
+    const input = document.getElementById('qty-input');
+    let val = parseInt(input.value) + delta;
+    if (val < 1) val = 1;
+    if (val > maxStock) val = maxStock;
+    input.value = val;
+    updateTotal();
+}
+
+function updateTotal() {
+    const qty   = parseInt(document.getElementById('qty-input').value);
+    const total = (qty * unitPrice).toFixed(2);
+    document.getElementById('total-display').textContent = total + ' MAD';
+}
+</script>
+{% endblock %}
+{% endblock %}

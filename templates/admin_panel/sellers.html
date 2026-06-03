@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Vendeurs{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="dashboard-header">
+        <h1>🏪 Gestion des vendeurs</h1>
+    </div>
+    <a href="{% url 'admin_dashboard' %}" class="btn-primary">← Retour au dashboard</a>
+
+    <div class="admin-table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Boutique</th>
+                    <th>Propriétaire</th>
+                    <th>Ville</th>
+                    <th>Bouquets</th>
+                    <th>Vérifié</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for seller in sellers %}
+                <tr>
+                    <td><strong>{{ seller.shop_name }}</strong></td>
+                    <td>{{ seller.user.username }}</td>
+                    <td>{{ seller.city|default:"—" }}</td>
+                    <td>{{ seller.bouquets.count }}</td>
+                    <td>
+                        {% if seller.is_verified %}
+                            <span class="badge badge-available">✓ Vérifié</span>
+                        {% else %}
+                            <span class="badge badge-warning">Non vérifié</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="{% url 'admin_seller_verify' seller.pk %}">
+                            {% csrf_token %}
+                            <button class="btn-outline" style="font-size:.8rem; padding:.3rem .7rem;">
+                                {% if seller.is_verified %}❌ Retirer{% else %}✅ Vérifier{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

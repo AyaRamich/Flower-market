@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Messages — FloralShop{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <h1>💬 Mes conversations</h1>
+
+    {% if conversations %}
+    <div class="conversations-list">
+        {% for conv in conversations %}
+        {% with other=conv.participants.exclude(pk=request.user.pk).first %}
+        <a href="{% url 'conversation_detail' conv.pk %}" class="conv-card">
+            <div class="conv-avatar">
+                {% if other.photo %}
+                    <img src="{{ other.photo.url }}" alt="{{ other.username }}">
+                {% else %}
+                    <div class="avatar-placeholder">{{ other.username|first|upper }}</div>
+                {% endif %}
+            </div>
+            <div class="conv-info">
+                <div class="conv-header">
+                    <strong>{{ other.username }}</strong>
+                    <span class="conv-time text-gray">
+                        {{ conv.last_updated|date:"d/m H:i" }}
+                    </span>
+                </div>
+                {% with last=conv.messages.last %}
+                {% if last %}
+                <p class="conv-preview text-gray">
+                    {% if last.sender == request.user %}Vous : {% endif %}
+                    {{ last.content|truncatechars:50 }}
+                </p>
+                {% endif %}
+                {% endwith %}
+                {% if conv.order %}
+                <span class="conv-order-tag">📦 Commande #{{ conv.order.pk }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <span>💬</span>
+        <p>Aucune conversation pour l'instant.</p>
+        <p class="text-gray">Les conversations démarrent après une commande.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

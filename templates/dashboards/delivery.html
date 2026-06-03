@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Livreur{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <!-- HEADER -->
+    <div class="dashboard-header">
+        <div>
+            <h1>🚚 Dashboard Livreur</h1>
+            <p class="text-gray">
+                {{ user.get_full_name|default:user.username }} —
+                {% if profile.is_available %}
+                    <span class="badge badge-available">Disponible</span>
+                {% else %}
+                    <span class="badge badge-canceled">Indisponible</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <span class="stat-icon">📬</span>
+            <div>
+                <div class="stat-value">{{ available_deliveries.count }}</div>
+                <div class="stat-label">Disponibles</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">🚴</span>
+            <div>
+                <div class="stat-value">{{ active_deliveries.count }}</div>
+                <div class="stat-label">En cours</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">✅</span>
+            <div>
+                <div class="stat-value">{{ completed_deliveries }}</div>
+                <div class="stat-label">Livrées</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">📦</span>
+            <div>
+                <div class="stat-value">{{ total_deliveries }}</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVRAISONS DISPONIBLES -->
+    <div class="dashboard-section">
+        <h2>📬 Livraisons disponibles</h2>
+        {% if available_deliveries %}
+        <div class="orders-list">
+            {% for order in available_deliveries %}
+            <div class="order-card urgent">
+                <div class="order-info">
+                    <span class="order-id">#{{ order.id }}</span>
+                    <div>
+                        <div><strong>🏪 {{ order.seller.shop_name }}</strong></div>
+                        <div class="text-gray" style="font-size:.85rem;">
+                            📍 Pickup : {{ order.seller.address|default:order.seller.city }}
+                        </div>
+                    </div>
+                    <div>
+                        <div><strong>👤 {{ order.client.username }}</strong></div>
+                        <div class="text-gray" style="font-size:.85rem;">
+                            📍 Livraison : {{ order.delivery_address }}, {{ order.delivery_city }}
+                        </div>
+                    </div>
+                    <span class="bouquet-price">{{ order.total_price }} MAD</span>
+                    <span class="text-gray">{{ order.created_at|date:"d/m H:i" }}</span>
+                </div>
+                <form method="POST" action="{% url 'delivery_accept' order.pk %}">
+                    {% csrf_token %}
+                    <button class="btn-accept">✅ Accepter</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:2rem;">
+            <span>📭</span>
+            <p>Aucune livraison disponible pour le moment.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- MES LIVRAISONS EN COURS -->
+    <div class="dashboard-section">
+        <h2>🚴 Mes livraisons en cours</h2>
+        {% if active_deliveries %}
+        <div class="orders-list">
+            {% for order in active_deliveries %}
+            <div class="order-card">
+                <div class="order-info" style="flex-wrap:wrap;">
+                    <span class="order-id">#{{ order.id }}</span>
+                    <div>
+                        <div><strong>👤 {{ order.client.username }}</strong></div>
+                        <div class="text-gray" style="font-size:.85rem;">
+                            📍 {{ order.delivery_address }}, {{ order.delivery_city }}
+                        </div>
+                        {% if order.client.phone %}
+                        <div class="text-gray" style="font-size:.85rem;">
+                            📞 {{ order.client.phone }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <span class="badge badge-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </div>
+                    <strong>{{ order.total_price }} MAD</strong>
+                </div>
+
+                <!-- UPDATE STATUT -->
+                <form method="POST" action="{% url 'delivery_update_status' order.pk %}"
+                      style="display:flex; gap:.8rem; align-items:center; margin-top:.8rem; flex-wrap:wrap;">
+                    {% csrf_token %}
+                    <select name="status" class="status-select">
+                        <option value="preparing"
+                            {% if order.status == 'preparing' %}selected{% endif %}>
+                            🌸 En préparation
+                        </option>
+                        <option value="on_road"
+                            {% if order.status == 'shipped' %}selected{% endif %}>
+                            🚚 En livraison
+                        </option>
+                        <option value="delivered">
+                            ✅ Livrée
+                        </option>
+                    </select>
+                    <button type="submit" class="btn-primary">
+                        Mettre à jour
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:2rem;">
+            <span>🚴</span>
+            <p>Aucune livraison en cours.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- HISTORIQUE -->
+    {% if completed_deliveries > 0 %}
+    <div class="dashboard-section">
+        <h2>✅ Historique ({{ completed_deliveries }} livrées)</h2>
+        <div class="admin-table-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Client</th>
+                        <th>Ville</th>
+                        <th>Montant</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in completed_orders %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td>{{ order.client.username }}</td>
+                        <td>{{ order.delivery_city }}</td>
+                        <td>{{ order.total_price }} MAD</td>
+                        <td>{{ order.updated_at|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block title %}{{ seller.shop_name }} — FloralShop{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <!-- BANNIÈRE VENDEUR -->
+    <div class="seller-banner">
+        {% if seller.banner %}
+            <img src="{{ seller.banner.url }}" alt="Bannière" class="seller-banner-img">
+        {% else %}
+            <div class="seller-banner-placeholder"></div>
+        {% endif %}
+
+        <div class="seller-banner-overlay">
+            <div class="seller-avatar-wrap">
+                {% if seller.user.photo %}
+                    <img src="{{ seller.user.photo.url }}" class="seller-avatar">
+                {% else %}
+                    <div class="seller-avatar-placeholder">
+                        {{ seller.shop_name|first|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="seller-banner-info">
+                <h1>
+                    {{ seller.shop_name }}
+                    {% if seller.is_verified %}
+                        <span class="verified-badge">✓ Vérifié</span>
+                    {% endif %}
+                </h1>
+                <p>📍 {{ seller.city }}</p>
+                <div class="seller-rating-display">
+                    {% for i in rating_range %}
+                        {% if i <= avg_rating %}
+                            <span class="star filled">★</span>
+                        {% else %}
+                            <span class="star">☆</span>
+                        {% endif %}
+                    {% endfor %}
+                    <span class="rating-text">
+                        {{ avg_rating }}/5 — {{ review_count }} avis
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DESCRIPTION -->
+    {% if seller.description %}
+    <div class="seller-about">
+        <h3>À propos</h3>
+        <p>{{ seller.description }}</p>
+    </div>
+    {% endif %}
+
+    <!-- BOUQUETS -->
+    <div class="seller-section">
+        <h2>💐 Nos bouquets ({{ bouquets.count }})</h2>
+        {% if bouquets %}
+        <div class="bouquets-grid">
+            {% for bouquet in bouquets %}
+            <a href="{% url 'bouquet_detail' bouquet.pk %}" class="bouquet-card">
+                {% with bouquet.images.first as img %}
+                    {% if img %}
+                        <img src="{{ img.image.url }}" alt="{{ bouquet.name }}">
+                    {% else %}
+                        <div class="bouquet-no-image">🌸</div>
+                    {% endif %}
+                {% endwith %}
+                <div class="bouquet-card-body">
+                    <span class="bouquet-city">📍 {{ bouquet.city }}</span>
+                    <h3>{{ bouquet.name }}</h3>
+                    <div class="bouquet-footer">
+                        <span class="bouquet-price">{{ bouquet.price }} MAD</span>
+                        <span class="badge badge-available">Disponible</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span>🌿</span>
+            <p>Aucun bouquet disponible pour le moment.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- AVIS -->
+    <div class="seller-section">
+        <h2>⭐ Avis clients ({{ review_count }})</h2>
+
+        <!-- FORMULAIRE AVIS -->
+        {% if can_review %}
+        <div class="review-form-card">
+            <h3>Laisser un avis</h3>
+            <form method="POST" action="{% url 'submit_review' seller.pk %}">
+                {% csrf_token %}
+
+                <div class="star-rating-input">
+                    <p>Votre note :</p>
+                    <div class="stars-input" id="stars-input">
+                        {% for i in rating_range %}
+                        <span class="star-btn" data-value="{{ i }}" onclick="setRating({{ i }})">★</span>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="rating" id="rating-input" value="5">
+                </div>
+
+                <div class="form-group" style="margin-top:1rem;">
+                    <label>Votre commentaire</label>
+                    <textarea name="comment" rows="3"
+                              placeholder="Partagez votre expérience..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    ⭐ Publier mon avis
+                </button>
+            </form>
+        </div>
+
+        {% elif existing_review %}
+        <div class="review-already">
+            <span>✅</span> Vous avez déjà laissé un avis pour ce vendeur.
+        </div>
+
+        {% elif user.is_authenticated and user.is_client %}
+        <div class="review-info">
+            <span>💡</span> Vous pourrez laisser un avis après réception d'une commande.
+        </div>
+        {% endif %}
+
+        <!-- LISTE DES AVIS -->
+        {% if reviews %}
+        <div class="reviews-list">
+            {% for review in reviews %}
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-author">
+                        <div class="review-avatar">
+                            {{ review.client.username|first|upper }}
+                        </div>
+                        <div>
+                            <strong>{{ review.client.get_full_name|default:review.client.username }}</strong>
+                            <span class="text-gray review-date">
+                                {{ review.created_at|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="review-stars">
+                        {% for i in rating_range %}
+                            {% if i <= review.rating %}
+                                <span class="star filled">★</span>
+                            {% else %}
+                                <span class="star">☆</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if review.comment %}
+                <p class="review-comment">{{ review.comment }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="empty-state" style="padding:2rem;">
+            <span>💬</span>
+            <p>Aucun avis pour le moment.</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+let currentRating = 5;
+
+function setRating(value) {
+    currentRating = value;
+    document.getElementById('rating-input').value = value;
+    document.querySelectorAll('.star-btn').forEach((star, index) => {
+        star.classList.toggle('selected', index < value);
+    });
+}
+
+// Initialiser à 5 étoiles
+setRating(5);
+</script>
+{% endblock %}
+{% endblock %}

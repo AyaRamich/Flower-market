@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}FloralShop — Fleurs fraîches livrées{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>🌸 Des fleurs fraîches,<br>livrées avec amour</h1>
+        <p>Découvrez des bouquets uniques créés par nos vendeurs passionnés</p>
+        <form method="GET" action="/" class="hero-search">
+            <input type="text" name="q" placeholder="Rechercher un bouquet..." value="{{ q }}">
+            <button type="submit" class="btn-primary">Rechercher</button>
+        </form>
+    </div>
+</section>
+
+<!-- FILTRES -->
+<section class="filters-section">
+    <form method="GET" class="filters-form">
+        <select name="category">
+            <option value="">Toutes catégories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.slug }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="city" placeholder="🏙 Ville" value="{{ city }}">
+        <input type="number" name="min_price" placeholder="Prix min (MAD)">
+        <input type="number" name="max_price" placeholder="Prix max (MAD)">
+        <button type="submit" class="btn-filter">Filtrer</button>
+    </form>
+</section>
+
+<!-- BOUQUETS -->
+<section class="bouquets-section">
+    <h2>Nos bouquets disponibles</h2>
+
+    {% if bouquets %}
+    <div class="bouquets-grid">
+        {% for bouquet in bouquets %}
+        <a href="{% url 'bouquet_detail' bouquet.pk %}" class="bouquet-card">
+            {% with bouquet.images.first as img %}
+                {% if img %}
+                    <img src="{{ img.image.url }}" alt="{{ bouquet.name }}">
+                {% else %}
+                    <div class="bouquet-no-image">🌸</div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="bouquet-card-body">
+                <span class="bouquet-city">📍 {{ bouquet.city }}</span>
+                <h3>{{ bouquet.name }}</h3>
+                <p>{{ bouquet.description|truncatechars:60 }}</p>
+                <div class="bouquet-footer">
+                    <span class="bouquet-price">{{ bouquet.price }} MAD</span>
+                    <span class="bouquet-seller">{{ bouquet.seller.shop_name }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span>🌿</span>
+        <p>Aucun bouquet trouvé.</p>
+    </div>
+    {% endif %}
+</section>
+
+{% endblock %}

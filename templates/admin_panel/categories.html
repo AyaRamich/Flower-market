@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Catégories{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="dashboard-header">
+        <h1>🏷 Gestion des catégories</h1>
+        <a href="{% url 'admin_dashboard' %}" class="btn-primary">← Retour au dashboard</a>
+    </div>
+    
+
+    <!-- Formulaire création rapide -->
+    <div class="quick-create-card">
+        <form method="POST" action="{% url 'admin_category_create' %}" style="display:flex; gap:1rem;">
+            {% csrf_token %}
+            <input type="text" name="name" placeholder="Nom de la catégorie..."
+                   required style="flex:1;">
+            <button type="submit" class="btn-primary">+ Créer</button>
+        </form>
+    </div>
+
+    <div class="admin-table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Slug</th>
+                    <th>Bouquets</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td><strong>{{ cat.name }}</strong></td>
+                    <td class="text-gray">{{ cat.slug }}</td>
+                    <td>{{ cat.bouquets.count }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'admin_category_delete' cat.pk %}"
+                              onsubmit="return confirm('Supprimer {{ cat.name }} ?')">
+                            {% csrf_token %}
+                            <button class="btn-cancel" style="font-size:.8rem; padding:.3rem .7rem;">
+                                🗑 Supprimer
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Gestion Stock{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="dashboard-header">
+        <h1>🌿 Gestion du Stock</h1>
+        <a href="{% url 'admin_stock_create' %}" class="btn-primary">+ Ajouter une fleur</a>
+    </div>
+    <a href="{% url 'admin_dashboard' %}" class="btn-primary">← Retour au dashboard</a>
+
+    {% if low_stock_alert %}
+    <div class="alert-banner">
+        ⚠️ {{ flowers|length }} fleur(s) en stock faible !
+    </div>
+    {% endif %}
+
+    <div class="admin-table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Fleur</th>
+                    <th>Quantité</th>
+                    <th>Unité</th>
+                    <th>Seuil alerte</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flower in flowers %}
+                <tr>
+                    <td><strong>{{ flower.flower_name }}</strong></td>
+                    <td>
+                        <span class="{% if flower.is_low_stock %}text-danger{% endif %}">
+                            {{ flower.quantity }}
+                        </span>
+                    </td>
+                    <td>{{ flower.get_unit_display }}</td>
+                    <td>{{ flower.min_threshold }}</td>
+                    <td>
+                        {% if flower.quantity == 0 %}
+                            <span class="badge badge-canceled">Épuisé</span>
+                        {% elif flower.is_low_stock %}
+                            <span class="badge badge-warning">Stock faible</span>
+                        {% else %}
+                            <span class="badge badge-available">OK</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:.5rem;">
+                            <a href="{% url 'admin_stock_edit' flower.pk %}"
+                               class="btn-outline" style="font-size:.8rem; padding:.3rem .7rem;">
+                                ✏️ Modifier
+                            </a>
+                            <form method="POST" action="{% url 'admin_stock_delete' flower.pk %}"
+                                  onsubmit="return confirm('Supprimer cette fleur ?')">
+                                {% csrf_token %}
+                                <button class="btn-cancel" style="font-size:.8rem; padding:.3rem .7rem;">
+                                    🗑
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

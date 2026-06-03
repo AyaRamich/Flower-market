@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Mes bouquets — FloralShop{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="dashboard-header">
+        <h1>💐 Mes bouquets</h1>
+        <a href="{% url 'bouquet_create' %}" class="btn-primary">+ Nouveau bouquet</a>
+    </div>
+
+    {% if bouquets %}
+    <div class="bouquets-grid">
+        {% for bouquet in bouquets %}
+        <div class="bouquet-card" style="position:relative;">
+
+            {% with bouquet.images.first as img %}
+                {% if img %}
+                    <img src="{{ img.image.url }}" alt="{{ bouquet.name }}">
+                {% else %}
+                    <div class="bouquet-no-image">🌸</div>
+                {% endif %}
+            {% endwith %}
+
+            <span class="bouquet-status-badge status-{{ bouquet.status }}">
+                {{ bouquet.get_status_display }}
+            </span>
+
+            <div class="bouquet-card-body">
+                <h3>{{ bouquet.name }}</h3>
+                <div class="bouquet-footer">
+                    <span class="bouquet-price">{{ bouquet.price }} MAD</span>
+                    <span class="text-gray">Stock : {{ bouquet.stock }}</span>
+                </div>
+                <div class="bouquet-card-actions">
+                    <a href="{% url 'bouquet_edit' bouquet.pk %}" class="btn-outline" style="font-size:.85rem; padding:.4rem .8rem;">✏️ Modifier</a>
+                    <form method="POST" action="{% url 'bouquet_delete' bouquet.pk %}"
+                          onsubmit="return confirm('Supprimer ce bouquet ?')">
+                        {% csrf_token %}
+                        <button class="btn-cancel" style="font-size:.85rem; padding:.4rem .8rem;">🗑 Supprimer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <span>🌿</span>
+        <p>Vous n'avez pas encore créé de bouquet.</p>
+        <a href="{% url 'bouquet_create' %}" class="btn-primary">Créer mon premier bouquet</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

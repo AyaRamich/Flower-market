@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Mes commandes — FloralShop{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <h1>🛍 Mes commandes</h1>
+
+    {% if orders %}
+    <div class="orders-list" style="margin-top: 1.5rem;">
+        {% for order in orders %}
+        <a href="{% url 'order_detail' order.pk %}" class="order-card-link">
+            <div class="order-card">
+                <div class="order-info">
+                    <span class="order-id">#{{ order.id }}</span>
+                    <span>🏪 {{ order.seller.shop_name|default:"—" }}</span>
+                    <span class="text-gray">{{ order.created_at|date:"d/m/Y" }}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <strong>{{ order.total_price }} MAD</strong>
+                    <span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <span>🛒</span>
+        <p>Vous n'avez pas encore de commandes.</p>
+        <a href="{% url 'home' %}" class="btn-primary">Découvrir les bouquets</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
